@@ -19,6 +19,7 @@ export function useGamePage() {
   const startDay = useGameStore((state) => state.startDay);
   const boost = useGameStore((state) => state.boost);
   const visitManager = useGameStore((state) => state.visitManager);
+  const sprint = useGameStore((state) => state.sprint);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -53,5 +54,6 @@ export function useGamePage() {
     startDay,
     boost,
     visitManager,
+    sprint,
   };
 }

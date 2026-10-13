@@ -113,3 +113,71 @@ export function sceneryPieces(): string[] {
     ...Object.values(DECOR_PIECES),
   ];
 }
+
+// ---------------------------------------------------------------- KayKit
+// Segundo kit, so de enfeite e detalhe: KayKit Restaurant Bits
+// (public/models/kaykit/restaurant.glb, scripts/pack-kaykit-restaurant.mjs).
+// Sem ele o jogo roda igual, so mais vazio.
+
+export const BITS_URL = '/models/kaykit/restaurant.glb';
+// as pecas dele tem 2 de lado por tile: entram pela metade
+export const BITS_SCALE = 0.5;
+
+export const BITS = {
+  // no fim da bancada do fundo, no lugar do ultimo balcao
+  fridges: ['fridge_A', 'fridge_B'],
+  // na parede, em cima de cada fogao
+  hood: 'extractorhood',
+  // em cima da bancada, nos trechos sem estacao: um grupo por trecho, na
+  // ordem. Cada peca com o deslocamento dela dentro do tile
+  clutter: [
+    [{ piece: 'pot_large', x: 0, z: 0 }],
+    [
+      { piece: 'jar_A_large', x: -0.22, z: -0.1 },
+      { piece: 'jar_B_medium', x: 0.08, z: -0.15 },
+      { piece: 'jar_C_small', x: 0.26, z: 0.1 },
+    ],
+    [{ piece: 'dishrack_plates', x: 0, z: 0 }],
+    [
+      { piece: 'papertowel', x: -0.2, z: -0.1 },
+      { piece: 'jar_B_medium', x: 0.15, z: 0 },
+    ],
+  ],
+  // pilha de caixotes, de baixo para cima; uma pilha por canto, na ordem
+  crates: [
+    ['crate_tomatoes', 'crate_cheese'],
+    ['crate_lettuce', 'crate_carrots'],
+    ['crate', 'crate_carrots'],
+    ['crate_cheese', 'crate'],
+  ],
+  // altura de um caixote empilhado (no tamanho do kit) e tamanho da pilha
+  crateHeight: 0.8,
+  crateScale: 0.9,
+  // caixote da entrega, na calcada
+  delivery: 'crate_lettuce',
+  // em cima de cada mesa e da mesa da gerente
+  menu: 'menu',
+  // em cima do balcao do caixa
+  registerJar: 'jar_C_small',
+  // na frente de quem senta: limpo ate comer, sujo depois
+  plate: 'plate',
+  plateDirty: 'plate_dirty',
+  // folha da porta de correr da sala da gerencia (duas, abrem sozinhas)
+  door: 'door_A',
+};
+
+// todas as pecas que o jogo pede ao segundo kit
+export function bitsPieces(): string[] {
+  return [
+    ...BITS.fridges,
+    BITS.hood,
+    ...BITS.clutter.flatMap((group) => group.map((part) => part.piece)),
+    ...BITS.crates.flat(),
+    BITS.delivery,
+    BITS.menu,
+    BITS.registerJar,
+    BITS.plate,
+    BITS.plateDirty,
+    BITS.door,
+  ];
+}

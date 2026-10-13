@@ -48,11 +48,14 @@ export function HomePage() {
         aria-hidden
         className='pointer-events-none absolute inset-x-0 top-0 flex justify-center gap-1.5'
       >
-        {[0, 1, 2, 3, 4].map((flap) => (
+        {[4.3, 5.9, 3.7, 6.7, 5.1].map((duration, flap) => (
           <div
             key={flap}
             className='noren-flap h-16 w-[min(18vw,7rem)] rounded-b-xl bg-[var(--game-brand)] shadow-[0_4px_0_var(--game-ink)] sm:h-20'
-            style={{ animationDelay: `${flap * -0.7}s` }}
+            style={{
+              animationDuration: `${duration}s`,
+              animationDelay: `${flap * -1.9}s`,
+            }}
           />
         ))}
       </div>

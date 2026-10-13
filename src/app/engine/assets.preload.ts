@@ -1,7 +1,7 @@
 import { preloadCharacterModel } from '@/app/engine/characters/character-model.loader';
 import { SKIN_MODELS } from '@/app/engine/characters/character-models.config';
 import { preloadModelKit } from '@/app/engine/scenery/model-kit';
-import { KIT_URL } from '@/app/engine/scenery/scenery.config';
+import { BITS_URL, KIT_URL } from '@/app/engine/scenery/scenery.config';
 
 // espera maxima pela rede antes de deixar o dia comecar mesmo assim
 export const PRELOAD_TIMEOUT = 12000;
@@ -13,6 +13,7 @@ export const PRELOAD_TIMEOUT = 12000;
 export function preloadGameAssets(): Promise<void> {
   const loads = [
     preloadModelKit(KIT_URL),
+    preloadModelKit(BITS_URL),
     ...Object.values(SKIN_MODELS).map(preloadCharacterModel),
   ];
   return Promise.race([

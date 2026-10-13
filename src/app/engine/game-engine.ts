@@ -64,8 +64,11 @@ export function createGameEngine(canvas: HTMLCanvasElement): GameEngine {
   const input: InputState = { moveX: 0, moveY: 0 };
   const onKeyDown = (event: KeyboardEvent) => {
     keys.add(event.code);
-    // as setas movem: evita a rolagem do navegador
-    if (event.code.startsWith('Arrow') && getWorld()?.status === 'playing') {
+    // as setas movem e o espaco corre: evita a rolagem do navegador
+    if (
+      (event.code.startsWith('Arrow') || event.code === 'Space') &&
+      getWorld()?.status === 'playing'
+    ) {
       event.preventDefault();
     }
     if (event.repeat) return;
@@ -74,6 +77,10 @@ export function createGameEngine(canvas: HTMLCanvasElement): GameEngine {
     if (event.code === 'Enter') store.begin();
     // F ou E: falar com a gerente, na mesa dela
     if (event.code === 'KeyF' || event.code === 'KeyE') store.visitManager();
+    // espaco ou shift: correr
+    if (event.code === 'Space' || event.code.startsWith('Shift')) {
+      store.sprint();
+    }
     // 1 a 4: boosts, na ordem do HUD
     const boost = BOOST_IDS[Number(event.code.replace('Digit', '')) - 1];
     if (event.code.startsWith('Digit') && boost) store.boost(boost);

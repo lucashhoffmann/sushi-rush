@@ -23,6 +23,9 @@ import {
 } from '@/app/engine/renderers/label.renderer';
 import { loadModelKit, type ModelKit } from '@/app/engine/scenery/model-kit';
 import {
+  BITS,
+  BITS_SCALE,
+  BITS_URL,
   DECOR_PIECES,
   DISH_PIECES,
   DISH_SCALE,
@@ -35,6 +38,7 @@ import {
   memberSpots,
 } from '@/app/modules/customer/systems/customer.system';
 import {
+  crateTiles,
   isSolid,
   OFFICE_DOOR,
   OFFICE_ROWS,
@@ -42,7 +46,10 @@ import {
 } from '@/app/modules/level/utils/layout.util';
 import { MANAGER_SKIN } from '@/app/modules/management/constants/management.constants';
 import { DISHES } from '@/app/modules/menu/constants/menu.constants';
-import { FLOATER_TIME } from '@/app/modules/world/constants/world.constants';
+import {
+  FLOATER_TIME,
+  SPRINT_TIME,
+} from '@/app/modules/world/constants/world.constants';
 import type {
   Action,
   Customer,
@@ -97,6 +104,9 @@ const CARRY_HEIGHT = 0.92;
 const CARRY_STACK = 0.16;
 // prato na mesa: do centro para o lado de quem come
 const PLATE_OFFSET = 0.3;
+// tamanho do prato (sobre o do kit) e quanto a comida fica acima dele
+const PLATE_SCALE = 0.75;
+const PLATE_RISE = 0.03;
 const KIND_BADGES: Partial<Record<Customer['kind'], string>> = {
   rushed: '⚡',
   vip: '👑',
@@ -110,6 +120,22 @@ const SPEECH_HEIGHT = 3.05;
 const REPLY_DELAY = 0.9;
 const CHAT_EVERY = [5, 11];
 const REPLY_REACH = 3.5;
+
+// vento da corrida: quantos arcos e riscos, e quantas voltas por segundo
+const WIND_GUSTS = 3;
+const WIND_STREAKS = 9;
+const WIND_GUST_RATE = 4;
+const WIND_STREAK_RATE = 3.2;
+// altura do tronco, e segundos para o vento crescer e sumir
+const WIND_HEIGHT = 0.6;
+const WIND_FADE = 0.2;
+// Porta da gerencia: abre sozinha com o player a menos de DOOR_NEAR tiles do
+// vao. Cada folha tem 1 tile (a peca tem 1.6 de largura) e corre DOOR_SLIDE
+// para dentro da parede, na velocidade DOOR_RATE (1/s)
+const BITS_SCALE_DOOR = 1 / 1.6;
+const DOOR_NEAR = 2.2;
+const DOOR_SLIDE = 0.95;
+const DOOR_RATE = 7;
 
 // tamanho do caminhao da entrega (o do kit taparia a calcada)
 const TRUCK_SCALE = 0.7;
@@ -172,30 +198,36 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
   ground.position.y = -0.03;
   root.add(ground);
 
+  // `kit`: o cenario. `bits`: o segundo kit, de enfeite; se nao chegar, o
+  // cenario sai sem ele. `settled`: os dois ja chegaram ou falharam
   let kit: ModelKit | null = null;
-  void loadModelKit(KIT_URL).then(
-    (loaded) => {
-      if (!disposed) kit = loaded;
+  let bits: ModelKit | null = null;
+  let settled = false;
+  void Promise.allSettled([loadModelKit(KIT_URL), loadModelKit(BITS_URL)]).then(
+    ([main, extra]) => {
+      if (disposed) return;
+      if (main.status === 'fulfilled') kit = main.value;
+      if (extra.status === 'fulfilled') bits = extra.value;
+      settled = true;
     },
-    () => {},
   );
 
   // ---------------------------------------------------------------- cenario
   let scenery = new THREE.Group();
   let builtFor: World | null = null;
   let truck: THREE.Object3D | null = null;
+  // folhas da porta da gerencia, e quanto esta aberta (0 a 1)
+  let doorLeaves: (THREE.Object3D | null)[] = [];
+  let doorOpen = 0;
+  // caixote da entrega: aparece so durante a entrega
+  let crate: THREE.Object3D | null = null;
   const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-  const crateMaterial = new THREE.MeshLambertMaterial({
-    color: COLORS.scene.crate,
-  });
   const registerMaterial = new THREE.MeshLambertMaterial({
     color: COLORS.scene.registerBody,
   });
   const screenMaterial = new THREE.MeshBasicMaterial({
     color: COLORS.scene.registerScreen,
   });
-  const crate = new THREE.Mesh(boxGeometry, crateMaterial);
-  crate.scale.set(0.6, 0.5, 0.6);
 
   function build(world: World, pieces: ModelKit): void {
     scenery.removeFromParent();
@@ -214,6 +246,22 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
       if (!object) return null;
       const size = KIT_SCALE * (options.scale ?? 1);
       object.scale.set(size * (options.sx ?? 1), size, size);
+      object.position.set(x, options.h ?? 0, -y);
+      object.rotation.y = options.rot ?? 0;
+      scenery.add(object);
+      return object;
+    };
+
+    // peca do segundo kit; sem ele, nada
+    const bit = (
+      name: string,
+      x: number,
+      y: number,
+      options: { h?: number; rot?: number; scale?: number } = {},
+    ) => {
+      const object = bits?.clone(name);
+      if (!object) return null;
+      object.scale.setScalar(BITS_SCALE * (options.scale ?? 1));
       object.position.set(x, options.h ?? 0, -y);
       object.rotation.y = options.rot ?? 0;
       scenery.add(object);
@@ -265,11 +313,59 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
       put(SCENERY.walls[1], x, OFFICE_ROWS[1]);
     }
     put(SCENERY.table, layout.desk.x, layout.desk.y);
+    bit(BITS.menu, layout.desk.x - 0.15, layout.desk.y - 0.2, {
+      h: SCENERY.tableTop,
+      rot: -Math.PI / 2,
+    });
+    // porta de correr da gerencia: duas folhas de um tile que fecham o vao.
+    // A origem da peca e a dobradica: uma folha cresce para o fundo, a outra
+    // para a frente, e as duas se encontram no meio
+    const leaf = BITS_SCALE_DOOR / BITS_SCALE;
+    doorLeaves = [
+      bit(BITS.door, w + 0.5, OFFICE_DOOR[0], {
+        rot: Math.PI / 2,
+        scale: leaf,
+      }),
+      bit(BITS.door, w + 0.5, OFFICE_DOOR[1] + 1, {
+        rot: -Math.PI / 2,
+        scale: leaf,
+      }),
+    ];
+    doorOpen = 0;
 
-    // bancada do fundo, com o que cada estacao tem em cima
-    for (let bx = 0; bx < w / 2; bx++) {
+    // bancada do fundo, com o que cada estacao tem em cima. O ultimo trecho
+    // (onde nunca ha estacao) sao as geladeiras
+    const fridges = bits ? 1 : 0;
+    for (let bx = 0; bx < w / 2 - fridges; bx++) {
       put(SCENERY.counters[bx % SCENERY.counters.length], 2 * bx + 1, h - 0.5);
     }
+    BITS.fridges.forEach((fridge, i) => bit(fridge, w - 1.5 + i, h - 0.5));
+    // tralha de cozinha nos tiles da bancada sem estacao
+    const used = new Set(world.stations.map((s) => Math.floor(s.pos.x)));
+    let group = 0;
+    for (let x = 0; x < w - 2; x++) {
+      if (used.has(x)) continue;
+      for (const part of BITS.clutter[group++ % BITS.clutter.length]) {
+        const object = bit(part.piece, x + 0.5 + part.x, h - 0.5, {
+          h: SCENERY.counterTop,
+        });
+        if (object) object.position.z += part.z;
+      }
+    }
+    // coifa na parede, em cima de cada fogao
+    for (const station of world.stations) {
+      if (station.kind === 'stove') bit(BITS.hood, station.pos.x, h - 0.2);
+    }
+    // pilhas de caixote nos cantos (tiles solidos: layout.util)
+    crateTiles(w).forEach(([x, y], pile) => {
+      BITS.crates[pile % BITS.crates.length].forEach((name, level) => {
+        bit(name, x + 0.5, y + 0.5, {
+          h: level * BITS.crateHeight * BITS_SCALE * BITS.crateScale,
+          scale: BITS.crateScale,
+          rot: level * 0.4,
+        });
+      });
+    });
     for (const station of world.stations) {
       for (const part of SCENERY.stations[station.kind]) {
         const object = put(part.piece, station.pos.x + part.x, station.pos.y, {
@@ -279,19 +375,23 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
       }
     }
 
-    // passa-pratos: balcoes de 2 tiles e meio balcao no tile que sobra
+    // passa-pratos: balcoes de 2 tiles e meio balcao no tile que sobra em
+    // cada trecho (ha um vao no meio)
     const passY = layout.kitchenY + 0.5;
-    const first = Math.floor(layout.pass[0].x);
-    const tiles = layout.pass.length;
-    for (let i = 0; i + 1 < tiles; i += 2) {
-      put(SCENERY.pass, first + i + 1, passY);
-    }
-    if (tiles % 2 === 1) {
-      put(SCENERY.pass, first + tiles - 0.5, passY, { sx: 0.5 });
+    const passX = layout.pass.map((spot) => Math.floor(spot.x));
+    for (let i = 0; i < passX.length;) {
+      if (passX[i + 1] === passX[i] + 1) {
+        put(SCENERY.pass, passX[i] + 1, passY);
+        i += 2;
+      } else {
+        put(SCENERY.pass, passX[i] + 0.5, passY, { sx: 0.5 });
+        i += 1;
+      }
     }
 
     for (const table of world.tables) {
       put(SCENERY.table, table.pos.x, table.pos.y);
+      bit(BITS.menu, table.pos.x, table.pos.y, { h: SCENERY.tableTop });
       for (const seat of seatSpots(table)) {
         put(SCENERY.stool, seat.pos.x, seat.pos.y);
       }
@@ -318,6 +418,9 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
         -register.pos.y,
       );
       scenery.add(body, screen);
+      bit(BITS.registerJar, register.pos.x - 0.1, register.pos.y + 0.32, {
+        h: SCENERY.counterTop,
+      });
     }
 
     // frente: cerca viva, portao e tapete
@@ -326,7 +429,7 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
     }
     put(SCENERY.gate, layout.doorX + 1, 1.5);
     put(SCENERY.carpet, layout.doorX + 1, 2.6);
-    put(SCENERY.bottles, first + tiles - 0.5, passY, {
+    put(SCENERY.bottles, passX[passX.length - 1] + 0.5, passY, {
       h: SCENERY.counterTop,
     });
 
@@ -341,8 +444,9 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
       rot: Math.PI / 2,
       scale: TRUCK_SCALE,
     });
-    crate.position.set(layout.delivery.x, 0.25, -layout.delivery.y);
-    scenery.add(crate);
+    crate = bit(BITS.delivery, layout.delivery.x, layout.delivery.y, {
+      scale: 0.7,
+    });
   }
 
   // ------------------------------------------------------------ personagens
@@ -354,6 +458,77 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
     opacity: 0.22,
     depthWrite: false,
   });
+
+  // vento da corrida do player, igual ao do salto do Blade & Bounty: arcos
+  // que saem das costas e riscos soltos atras. Solto no `root` (o corpo do
+  // player troca com a skin); `x` positivo e a frente
+  const gustGeometry = new THREE.TorusGeometry(0.42, 0.035, 6, 14, Math.PI)
+    .rotateX(Math.PI / 2)
+    .rotateY(-Math.PI / 2);
+  const streakGeometry = new THREE.BoxGeometry(0.5, 0.02, 0.03);
+  const windMaterial = new THREE.MeshBasicMaterial({
+    color: COLORS.scene.wind,
+    transparent: true,
+    opacity: 0.6,
+    depthWrite: false,
+  });
+  const wind = new THREE.Group();
+  wind.rotation.order = 'YXZ';
+  wind.visible = false;
+  root.add(wind);
+  const gusts = Array.from({ length: WIND_GUSTS }, () => {
+    const gust = new THREE.Mesh(gustGeometry, windMaterial);
+    wind.add(gust);
+    return gust;
+  });
+  // riscos espalhados em volta do corpo, cada um na sua altura e lado
+  const streaks = Array.from({ length: WIND_STREAKS }, (_, i) => {
+    const streak = new THREE.Mesh(streakGeometry, windMaterial);
+    const around = (i / WIND_STREAKS) * Math.PI * 2 + i;
+    streak.position.set(
+      0,
+      Math.sin(around) * (0.12 + (i % 3) * 0.1),
+      Math.cos(around) * (0.16 + (i % 2) * 0.14),
+    );
+    wind.add(streak);
+    return streak;
+  });
+
+  // `sprint`: segundos que faltam da corrida. O vento cresce no comeco, some
+  // no fim e so aparece com o player andando
+  function drawWind(
+    pos: Vec2,
+    facing: number,
+    sprint: number,
+    moving: number,
+    time: number,
+  ): void {
+    wind.visible = sprint > 0 && moving > 0.05;
+    if (!wind.visible) return;
+    const strength = Math.min(
+      1,
+      sprint / WIND_FADE,
+      (SPRINT_TIME - sprint) / WIND_FADE,
+    );
+    wind.position.set(pos.x, WIND_HEIGHT, -pos.y);
+    wind.rotation.set(Math.sin(time * 30) * 0.15, facing, 0);
+    wind.scale.setScalar(0.3 + strength * 0.7);
+    wind.scale.x *= 1 + strength * 0.8;
+    // arcos saem das costas um atras do outro, abrindo e sumindo
+    gusts.forEach((gust, i) => {
+      const flow = (time * WIND_GUST_RATE + i / WIND_GUSTS) % 1;
+      gust.position.x = -0.1 - flow * 0.75;
+      gust.scale.setScalar((0.55 + flow * 0.6) * (1 - flow * flow));
+    });
+    // riscos correm para tras em fila: nascem curtos junto do corpo, esticam
+    // e afinam ate sumir
+    streaks.forEach((streak, i) => {
+      const flow = (time * WIND_STREAK_RATE + i * 0.37) % 1;
+      streak.position.x = -0.3 - flow * 1.5;
+      const thin = 1 - flow * 0.7;
+      streak.scale.set(0.4 + Math.sin(Math.PI * flow) * 2, thin, thin);
+    });
+  }
 
   function actorOf(key: string, skin: SkinId): Actor {
     let actor = actors.get(key);
@@ -421,19 +596,23 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
   }
 
   // ------------------------------------------------------- pratos e baloes
+  // objeto solto que aparece e some com o mundo (prato na mesa, na bandeja):
+  // peca de um dos kits, na posicao dada
   const dishes = new Map<string, { object: THREE.Object3D; seen: boolean }>();
-  function drawDish(
+  function drawProp(
     key: string,
-    dish: DishId,
+    source: ModelKit | null,
+    piece: string,
+    scale: number,
     x: number,
     height: number,
     y: number,
   ): void {
     let entry = dishes.get(key);
     if (!entry) {
-      const object = kit?.clone(DISH_PIECES[dish]);
+      const object = source?.clone(piece);
       if (!object) return;
-      object.scale.setScalar(DISH_SCALE);
+      object.scale.setScalar(scale);
       root.add(object);
       entry = { object, seen: true };
       dishes.set(key, entry);
@@ -441,6 +620,13 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
     entry.seen = true;
     entry.object.position.set(x, height, -y);
   }
+  const drawDish = (
+    key: string,
+    dish: DishId,
+    x: number,
+    height: number,
+    y: number,
+  ) => drawProp(key, kit, DISH_PIECES[dish], DISH_SCALE, x, height, y);
 
   const labels = new Map<string, { label: Label; seen: boolean }>();
 
@@ -590,7 +776,7 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
   return {
     sync(world, time, dt) {
       lifetime += dt;
-      if (kit && builtFor !== world) {
+      if (kit && settled && builtFor !== world) {
         build(world, kit);
         builtFor = world;
       }
@@ -632,6 +818,7 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
         dt,
       );
       carry('player', player);
+      drawWind(player.pos, player.facing, player.sprint, player.moving, time);
 
       for (const staff of world.staff) {
         drawActor(
@@ -667,14 +854,31 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
             },
             dt,
           );
-          // prato que ja chegou, na frente de quem pediu
-          if (seated && table && i < customer.delivered) {
+          if (!seated || !table) return;
+          // na frente de cada um: prato limpo; a comida em cima quando
+          // chega; prato sujo depois de comer
+          const px =
+            table.pos.x + Math.sign(spot.pos.x - table.pos.x) * PLATE_OFFSET;
+          const py =
+            table.pos.y + Math.sign(spot.pos.y - table.pos.y) * PLATE_OFFSET;
+          const done = customer.state === 'wantPay';
+          const plate = done ? BITS.plateDirty : BITS.plate;
+          drawProp(
+            `plate:${customer.id}:${i}:${plate}`,
+            bits,
+            plate,
+            BITS_SCALE * PLATE_SCALE,
+            px,
+            SCENERY.tableTop,
+            py,
+          );
+          if (!done && i < customer.delivered) {
             drawDish(
               `table:${customer.id}:${i}`,
               customer.orders[i],
-              table.pos.x + Math.sign(spot.pos.x - table.pos.x) * PLATE_OFFSET,
-              SCENERY.tableTop,
-              table.pos.y + Math.sign(spot.pos.y - table.pos.y) * PLATE_OFFSET,
+              px,
+              SCENERY.tableTop + PLATE_RISE,
+              py,
             );
           }
         });
@@ -762,9 +966,25 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
         );
       }
 
+      // porta de correr: cada folha entra na parede do lado dela
+      const doorway = {
+        x: world.layout.salonW + 0.5,
+        y: OFFICE_DOOR[0] + 1,
+      };
+      const near = distance(world.player.pos, doorway) < DOOR_NEAR;
+      doorOpen += ((near ? 1 : 0) - doorOpen) * Math.min(1, dt * DOOR_RATE);
+      doorLeaves.forEach((leaf, side) => {
+        if (!leaf) return;
+        const hinge = side === 0 ? OFFICE_DOOR[0] : OFFICE_DOOR[1] + 1;
+        leaf.position.z = -(
+          hinge +
+          (side === 0 ? -1 : 1) * DOOR_SLIDE * doorOpen
+        );
+      });
+
       const delivering = world.delivery > 0;
       if (truck) truck.visible = delivering;
-      crate.visible = delivering;
+      if (crate) crate.visible = delivering;
       if (delivering) {
         const { x, y } = world.layout.delivery;
         drawLabel(
@@ -825,11 +1045,13 @@ export function createWorldRenderer(scene: THREE.Scene): WorldRenderer {
       ground.geometry.dispose();
       ground.material.dispose();
       boxGeometry.dispose();
-      crateMaterial.dispose();
       registerMaterial.dispose();
       screenMaterial.dispose();
       shadowGeometry.dispose();
       shadowMaterial.dispose();
+      gustGeometry.dispose();
+      streakGeometry.dispose();
+      windMaterial.dispose();
     },
   };
 }

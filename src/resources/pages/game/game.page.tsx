@@ -22,6 +22,7 @@ export function GamePage() {
     startDay,
     boost,
     visitManager,
+    sprint,
   } = useGamePage();
 
   return (
@@ -35,6 +36,7 @@ export function GamePage() {
         tips={tips}
         onBoost={boost}
         onManager={visitManager}
+        onSprint={sprint}
         onPause={screen === 'playing' ? pause : undefined}
       />
       {screen === 'playing' && <VirtualJoystick onMove={setJoystickInput} />}

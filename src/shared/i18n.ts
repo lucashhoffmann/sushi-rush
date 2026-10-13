@@ -66,8 +66,9 @@ const pt = {
       ],
     ] as [string, string][],
     controls: {
-      keyboard: 'WASD ou setas: andar · 1 a 4: boosts · P: pausar',
-      touch: 'Arraste na parte de baixo da tela para andar',
+      keyboard:
+        'WASD ou setas: andar · Espaço: correr · 1 a 4: boosts · P: pausar',
+      touch: 'Arraste na parte de baixo da tela para andar · 💨 para correr',
     },
     quit: 'Sair do dia',
     quitNote: 'Sair agora perde o caixa de hoje. A gorjeta já está guardada.',
@@ -75,6 +76,7 @@ const pt = {
     served: 'Atendidos',
     closing: 'Fechando',
     tray: 'Bandeja',
+    sprint: (left: number, max: number) => `Correr: ${left} de ${max}`,
     combo: (count: number) => `Combo x${count}`,
     rush: 'Hora do rush!',
     delivery: (seconds: number) => `Entrega na calçada! ${seconds}s`,
@@ -342,8 +344,8 @@ const en: typeof pt = {
       ],
     ],
     controls: {
-      keyboard: 'WASD or arrows: walk · 1 to 4: boosts · P: pause',
-      touch: 'Drag on the lower part of the screen to walk',
+      keyboard: 'WASD or arrows: walk · Space: run · 1 to 4: boosts · P: pause',
+      touch: 'Drag on the lower part of the screen to walk · 💨 to run',
     },
     quit: 'Quit the day',
     quitNote: "Quitting now loses today's cash. Tips are already saved.",
@@ -351,6 +353,7 @@ const en: typeof pt = {
     served: 'Served',
     closing: 'Closing',
     tray: 'Tray',
+    sprint: (left, max) => `Run: ${left} of ${max}`,
     combo: (count) => `Combo x${count}`,
     rush: 'Rush hour!',
     delivery: (seconds) => `Delivery on the sidewalk! ${seconds}s`,

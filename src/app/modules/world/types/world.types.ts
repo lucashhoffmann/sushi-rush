@@ -140,6 +140,12 @@ export type Player = {
   // ids dos pedidos (`Ticket`) que leva na bandeja
   carrying: number[];
   action: Action;
+  // segundos que faltam da corrida em curso; 0 = andando
+  sprint: number;
+  // corridas guardadas, de 0 a SPRINT_MAX
+  sprints: number;
+  // segundos ate as corridas voltarem todas; 0 = nenhuma gasta
+  sprintReset: number;
 };
 
 export type StaffTask =

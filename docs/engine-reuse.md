@@ -32,7 +32,9 @@ num jogo e copiada para os outros no mesmo dia. No Sushi Rush vale para:
 
 O que este jogo **nao** tem dos outros: `kaykit.rig.ts` e
 `scripts/pack-kaykit*.mjs` (o esqueleto e o empacotador daqui sao
-`sushi.rig.ts` e `scripts/pack-sushi.mjs`), lobby e `session.store`. O
+`sushi.rig.ts` e `scripts/pack-sushi.mjs`; o segundo kit de cenario usa
+`scripts/pack-kaykit-restaurant.mjs`, copia do `pack-kaykit-dungeon.mjs` com
+outra lista), lobby e `session.store`. O
 joystick de toque e copia sem os botoes de salto, agachar e ataque.
 
 `diff -r` entre as pastas dos jogos mostra o que divergiu.

@@ -40,3 +40,25 @@ A parede da frente nao existe: a camera olha da rua para dentro.
 Outro kit com a mesma ideia (pecas soltas, uma textura): novo script de
 empacotar, novos nomes em `scenery.config.ts`, `KIT_SCALE` e `counterTop`,
 `tableTop` conforme as medidas dele.
+
+## Segundo kit: KayKit Restaurant Bits
+
+`public/models/kaykit/restaurant.glb` (`scripts/pack-kaykit-restaurant.mjs`,
+copia do `pack-kaykit-dungeon.mjs` dos outros jogos). So enfeite e detalhe;
+se o arquivo nao chegar, o cenario sai sem ele. Tudo em `BITS`
+(`scenery.config.ts`), na escala `BITS_SCALE`:
+
+| Coisa                         | Onde                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| geladeiras                    | fim da bancada do fundo, no lugar do ultimo balcao   |
+| coifa                         | parede, em cima de cada fogao                        |
+| panelao, potes, escorredor    | tiles da bancada sem estacao (`BITS.clutter`)        |
+| pilhas de caixote             | `crateTiles` (layout.util): tiles solidos            |
+| cardapio                      | cada mesa e a mesa da gerente                        |
+| prato limpo / sujo            | na frente de quem senta; sujo depois de comer        |
+| pote                          | balcao do caixa                                      |
+| porta de correr (duas folhas) | vao da gerencia; abre sozinha com o player por perto |
+| caixote da entrega            | calcada, durante a entrega                           |
+
+Peca nova deste kit: nome em `PIECES` no script, rodar, usar em `BITS` (e em
+`bitsPieces()`, que o teste de arquivos confere).

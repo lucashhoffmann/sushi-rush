@@ -35,6 +35,7 @@ import {
   SPAWN_EVERY,
   SPAWN_MIN,
   SPAWN_PER_STAR,
+  SPRINT_MAX,
 } from '@/app/modules/world/constants/world.constants';
 import type {
   BoostId,
@@ -65,6 +66,9 @@ export function createWorld(restaurant: Restaurant, seed: number): World {
       moving: 0,
       carrying: [],
       action: 'none',
+      sprint: 0,
+      sprints: SPRINT_MAX,
+      sprintReset: 0,
     },
     staff: [],
     customers: [],

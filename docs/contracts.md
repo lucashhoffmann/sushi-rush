@@ -103,8 +103,14 @@ que fechou.
 | `tick(input, dt)`             | um passo: `stepWorld`, credita gorjeta, fecha o dia     |
 | `manage(action)`              | compra da gerencia, pelo save                           |
 | `boost(id)`                   | liga o boost e cobra a gorjeta                          |
+| `sprint`                      | gasta uma corrida do player (`startSprint`)             |
 | `backToMenu`                  | larga o dia (o caixa do dia se perde)                   |
 | `openManage`, `openCharacter` | telas                                                   |
+
+Corrida do player: `player.sprints` guarda ate `SPRINT_MAX`; `startSprint`
+gasta uma e liga `player.sprint` (segundos que faltam, a `SPRINT_SPEED` vezes
+a velocidade). A primeira gasta liga `player.sprintReset`: quando zera,
+voltam todas. O HUD le `hud.sprints`, `hud.sprinting` e `hud.sprintReset`.
 
 Com o player na mesa da gerente (`world.atManager`, que vira
 `hud.atManager`), `visitManager` (botao do HUD ou tecla F) pausa o mundo,

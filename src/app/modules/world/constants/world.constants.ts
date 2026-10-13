@@ -28,6 +28,13 @@ export const PLAYER_SPEED = 4.2;
 export const PLAYER_RADIUS = 0.3;
 // cada nivel do tenis soma isto a velocidade do player
 export const SHOES_BONUS = 0.1;
+// corrida: um toque vale SPRINT_TIME segundos a SPRINT_SPEED vezes a
+// velocidade. Sao SPRINT_MAX por vez; SPRINT_RESET segundos depois da
+// primeira usada, voltam todas
+export const SPRINT_MAX = 3;
+export const SPRINT_TIME = 2;
+export const SPRINT_SPEED = 1.7;
+export const SPRINT_RESET = 20;
 export const CUSTOMER_SPEED = 2.4;
 // garcom e cozinheiro andando: base mais um tanto por nivel
 export const STAFF_SPEED = 2.6;

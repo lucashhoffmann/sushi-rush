@@ -64,20 +64,43 @@
   }
 }
 
-/* noren da tela inicial: cada pano balanca de leve, preso em cima */
+/* noren da tela inicial: pano preso em cima, batido por vento. Os passos sao
+   irregulares de proposito (calmaria, rajada, rebote); cada pano roda com
+   duracao e atraso proprios (home.page.tsx), entao nunca sincronizam */
 @keyframes noren-sway {
   0%,
   100% {
-    transform: skewX(-3deg) scaleY(1);
+    transform: skewX(-2deg) scaleY(1);
   }
-  50% {
-    transform: skewX(3deg) scaleY(1.04);
+  14% {
+    transform: skewX(5deg) scaleY(1.05);
+  }
+  27% {
+    transform: skewX(1deg) scaleY(1.01);
+  }
+  41% {
+    transform: skewX(13deg) scaleY(1.12);
+  }
+  52% {
+    transform: skewX(-7deg) scaleY(0.97);
+  }
+  66% {
+    transform: skewX(4deg) scaleY(1.04);
+  }
+  83% {
+    transform: skewX(-10deg) scaleY(1.08);
   }
 }
 
 .noren-flap {
   transform-origin: top center;
-  animation: noren-sway 3.6s ease-in-out infinite;
+  animation: noren-sway 4.3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noren-flap {
+    animation: none;
+  }
 }
 
 /* dica do joystick: o botao percorre um infinito (lemniscata) em volta do

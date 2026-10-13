@@ -18,7 +18,7 @@ import type {
 //
 //   y = 16  bancada do fundo, com as estacoes (solida)
 //   y = 14, 15  cozinha (dois tiles, para se ver por cima do passa-pratos)
-//   y = 13  passa-pratos (solido), com vao nas duas pontas
+//   y = 13  passa-pratos (solido), com vao nas duas pontas e no meio
 //   y = 11, 12  corredor
 //   y = 4, 7, 10  mesas, de 4 em 4 tiles em x a partir de x = 2
 //   y = 2  entrada
@@ -57,6 +57,20 @@ export const tableSlots = (expansion: number) =>
 export const stationSlots = (expansion: number) =>
   Math.floor((widthOf(expansion) - 2) / 2);
 
+// primeiro dos dois tiles do vao do meio do passa-pratos
+export const passGap = (salonW: number) => salonW / 2 - 1;
+
+// Tiles tomados por pilhas de caixote (so enfeite, mas ninguem atravessa):
+// os dois cantos do fundo da cozinha e os do fundo da sala da gerencia.
+export function crateTiles(salonW: number): [number, number][] {
+  return [
+    [0, STATION_Y - 1],
+    [salonW - 1, STATION_Y - 1],
+    [salonW + 1, OFFICE_ROWS[1]],
+    [salonW + 3, OFFICE_ROWS[1]],
+  ];
+}
+
 export const tileCenter = (tx: number, ty: number): Vec2 => ({
   x: tx + 0.5,
   y: ty + 0.5,
@@ -94,14 +108,18 @@ export function buildLevel(plan: Plan): {
     }
   }
   block(w + 2, OFFICE_DOOR[1]);
+  for (const [x, y] of crateTiles(w)) block(x, y);
 
   // cerca da frente, com o portao de dois tiles
   for (let x = 0; x < total; x++) {
     if (x !== DOOR_X && x !== DOOR_X + 1) block(x, 1);
   }
-  // passa-pratos: vao de um tile a esquerda e de dois a direita
+  // passa-pratos: vao de um tile a esquerda, de dois a direita e de dois no
+  // meio, para entrar na cozinha sem dar a volta
+  const gap = passGap(w);
   const pass: Vec2[] = [];
   for (let x = 1; x <= w - 3; x++) {
+    if (x === gap || x === gap + 1) continue;
     block(x, PASS_Y);
     pass.push(tileCenter(x, PASS_Y));
   }

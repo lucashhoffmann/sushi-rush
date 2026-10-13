@@ -17,10 +17,27 @@ import {
   PLAYER_RADIUS,
   PLAYER_SPEED,
   REGISTER_REACH,
+  SPRINT_MAX,
+  SPRINT_RESET,
+  SPRINT_SPEED,
+  SPRINT_TIME,
   STATION_REACH,
   TABLE_REACH,
 } from '@/app/modules/world/constants/world.constants';
 import type { InputState, World } from '@/app/modules/world/types/world.types';
+
+// Gasta uma corrida guardada. A primeira gasta liga a contagem que devolve
+// todas. Devolve false se nao deu (ja correndo, sem corrida, dia parado).
+export function startSprint(world: World): boolean {
+  const { player } = world;
+  if (world.status !== 'playing' || player.sprint > 0 || player.sprints === 0) {
+    return false;
+  }
+  player.sprints--;
+  player.sprint = SPRINT_TIME;
+  if (player.sprintReset === 0) player.sprintReset = SPRINT_RESET;
+  return true;
+}
 
 // O player atende por proximidade: chegou perto, faz. Nao ha botao de acao:
 // a decisao do jogador e para onde ir.
@@ -31,7 +48,15 @@ export function stepPlayer(world: World, input: InputState, dt: number): void {
   const scale = length > 1 ? 1 / length : 1;
   const moveX = input.moveX * scale;
   const moveY = input.moveY * scale;
-  const speed = PLAYER_SPEED * world.mods.playerSpeed;
+  player.sprint = Math.max(0, player.sprint - dt);
+  if (player.sprintReset > 0) {
+    player.sprintReset = Math.max(0, player.sprintReset - dt);
+    if (player.sprintReset === 0) player.sprints = SPRINT_MAX;
+  }
+  const speed =
+    PLAYER_SPEED *
+    world.mods.playerSpeed *
+    (player.sprint > 0 ? SPRINT_SPEED : 1);
   moveCircle(
     layout,
     player.pos,

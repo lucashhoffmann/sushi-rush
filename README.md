@@ -10,7 +10,7 @@ Jogo de restaurante com visão de cima, feito para navegador e celular. Você é
 
 Terceiro jogo da mesma base (`workspace/games`): Shadow Contract, Blade & Bounty e este. A arquitetura é a mesma (um `World` de dados, sistemas em passo fixo, engine three.js que só desenha, UI React por cima) e os adaptadores de modelo (`src/app/engine/characters`, `src/app/engine/scenery/model-kit.ts`) são cópia dos outros dois. A simulação é nova. Ver `docs/engine-reuse.md`.
 
-Modelos: kit "Sushi Restaurant" (personagens, cenário, comida, decoração), empacotado por `scripts/pack-sushi.mjs` em `public/models/sushi`.
+Modelos: kit "Sushi Restaurant" (personagens, cenário, comida, decoração), empacotado por `scripts/pack-sushi.mjs` em `public/models/sushi`; e KayKit Restaurant Bits (CC0), só de enfeite e detalhe (geladeiras, coifa, caixotes, potes, pratos, cardápios), empacotado por `scripts/pack-kaykit-restaurant.mjs` em `public/models/kaykit`.
 
 ## O jogo
 
@@ -50,6 +50,7 @@ Refazer os modelos a partir do kit:
 
 ```bash
 node scripts/pack-sushi.mjs <pasta sushi-restaurant>
+node scripts/pack-kaykit-restaurant.mjs <pasta KayKit_Restaurant_Bits>
 ```
 
 ## Multiplayer

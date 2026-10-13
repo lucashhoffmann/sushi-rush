@@ -1,6 +1,7 @@
 import {
   buildLevel,
   isSolid,
+  passGap,
   stationSlots,
   tableSlots,
   tileCenter,
@@ -46,6 +47,10 @@ describe('planta do restaurante', () => {
           true,
         );
         expect(pathBeside(layout, door, spot)).not.toBeNull();
+      }
+      // vao do meio do passa-pratos, por onde se entra na cozinha
+      for (const x of [passGap(layout.salonW), passGap(layout.salonW) + 1]) {
+        expect(isSolid(layout, x, layout.kitchenY)).toBe(false);
       }
       // a mesa da gerente, na sala ao lado
       expect(pathBeside(layout, door, layout.desk)).not.toBeNull();

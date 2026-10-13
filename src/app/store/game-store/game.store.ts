@@ -5,11 +5,14 @@ import {
   type ManageAction,
   starsOf,
 } from '@/app/modules/management/systems/management.system';
+import { startSprint } from '@/app/modules/player/systems/player.system';
 import { takeTips } from '@/app/modules/vault/systems/vault.system';
 import {
   BOOST_IDS,
   BOOSTS,
   DAY_LENGTH,
+  SPRINT_MAX,
+  SPRINT_RESET,
 } from '@/app/modules/world/constants/world.constants';
 import {
   begin as beginWorld,
@@ -73,6 +76,11 @@ export type Hud = {
   fresh: boolean;
   // o player esta na mesa da gerente: o botao de acao aparece
   atManager: boolean;
+  // corridas guardadas, se esta correndo agora, e a fracao (1 a 0, em passos
+  // de 5%) que falta para voltarem todas; 0 = nenhuma gasta
+  sprints: number;
+  sprinting: boolean;
+  sprintReset: number;
 };
 
 // o que o dia rendeu, para a tela de fim de dia
@@ -116,6 +124,8 @@ type GameStore = {
   openCharacter: () => void;
   manage: (action: ManageAction) => boolean;
   boost: (id: BoostId) => void;
+  // gasta uma corrida do player (botao ou tecla)
+  sprint: () => void;
   setGraphics: (graphics: Graphics) => void;
   resetGame: () => void;
   tick: (input: InputState, dt: number) => void;
@@ -156,6 +166,9 @@ function hudOf(current: World | null, restaurant: Restaurant): Hud {
       delivery: 0,
       fresh: false,
       atManager: false,
+      sprints: SPRINT_MAX,
+      sprinting: false,
+      sprintReset: 0,
     };
   }
   const { run } = current;
@@ -183,6 +196,9 @@ function hudOf(current: World | null, restaurant: Restaurant): Hud {
     delivery: Math.ceil(current.delivery),
     fresh: current.fresh,
     atManager: current.status === 'playing' && current.atManager,
+    sprints: current.player.sprints,
+    sprinting: current.player.sprint > 0,
+    sprintReset: step(current.player.sprintReset / SPRINT_RESET, 0.05),
   };
 }
 
@@ -317,6 +333,10 @@ export const useGameStore = create<GameStore>()(
           if (!startBoost(world, id)) return;
           spendTips(BOOSTS[id].tips);
           set({ restaurant: readSave() });
+        },
+
+        sprint: () => {
+          if (world) startSprint(world);
         },
 
         setGraphics: (graphics) =>

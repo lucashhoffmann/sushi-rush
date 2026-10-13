@@ -8,7 +8,12 @@ import {
   PAN_NODE,
   SUSHI_RIG,
 } from '@/app/engine/characters/sushi.rig';
-import { KIT_URL, sceneryPieces } from '@/app/engine/scenery/scenery.config';
+import {
+  BITS_URL,
+  bitsPieces,
+  KIT_URL,
+  sceneryPieces,
+} from '@/app/engine/scenery/scenery.config';
 
 // Os arquivos publicados (scripts/pack-sushi.mjs) tem o que a configuracao
 // pede: sem isto, peca ou clipe que falta so apareceria no navegador.
@@ -29,6 +34,14 @@ describe('arquivos do kit sushi', () => {
   it('toda peca de cenario, prato e decoracao esta no kit', () => {
     const names = new Set(readGlb(KIT_URL).nodes.map((node) => node.name));
     const missing = sceneryPieces().filter(
+      (piece) => !names.has(`piece_${piece}`),
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('toda peca de enfeite esta no kit do KayKit', () => {
+    const names = new Set(readGlb(BITS_URL).nodes.map((node) => node.name));
+    const missing = bitsPieces().filter(
       (piece) => !names.has(`piece_${piece}`),
     );
     expect(missing).toEqual([]);

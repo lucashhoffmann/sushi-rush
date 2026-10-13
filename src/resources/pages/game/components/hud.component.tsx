@@ -3,6 +3,7 @@ import { Pause } from 'lucide-react';
 import {
   BOOST_IDS,
   BOOSTS,
+  SPRINT_MAX,
 } from '@/app/modules/world/constants/world.constants';
 import type { BoostId } from '@/app/modules/world/types/world.types';
 import type { Hud as HudData } from '@/app/store/game-store/game.store';
@@ -30,12 +31,21 @@ type HudProps = {
   onBoost: (id: BoostId) => void;
   // falar com a gerente (o botao so aparece na mesa dela)
   onManager: () => void;
+  // correr (no teclado, Espaco)
+  onSprint: () => void;
   onPause?: () => void;
 };
 
 // O que o jogador acompanha durante o dia. Nao pega toque (o jogo esta por
 // baixo), fora os botoes.
-export function Hud({ hud, tips, onBoost, onManager, onPause }: HudProps) {
+export function Hud({
+  hud,
+  tips,
+  onBoost,
+  onManager,
+  onSprint,
+  onPause,
+}: HudProps) {
   const t = useTexts();
   const banner = hud.closing
     ? t.game.closing
@@ -203,6 +213,52 @@ export function Hud({ hud, tips, onBoost, onManager, onPause }: HudProps) {
           );
         })}
       </div>
+
+      {/* correr: no canto direito embaixo, no polegar. Os tracos sao as
+          corridas guardadas; o fundo esvazia ate elas voltarem todas */}
+      {onPause && (
+        <button
+          type='button'
+          aria-label={t.game.sprint(hud.sprints, SPRINT_MAX)}
+          title={t.game.sprint(hud.sprints, SPRINT_MAX)}
+          aria-pressed={hud.sprinting}
+          disabled={hud.sprinting || hud.sprints === 0}
+          // o toque e do botao: nao comeca o joystick por baixo
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={onSprint}
+          className='pointer-events-auto absolute right-[max(0.6rem,env(safe-area-inset-right))] bottom-[max(1.25rem,env(safe-area-inset-bottom))] flex size-[4.5rem] cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-full border-4 border-[var(--game-frame)] bg-[var(--game-panel)] shadow-[0_4px_0_var(--game-ink)] transition-transform active:translate-y-1 active:shadow-none disabled:cursor-default disabled:opacity-55 aria-pressed:border-[var(--game-tip)] aria-pressed:opacity-100'
+        >
+          <span
+            aria-hidden
+            className='absolute inset-x-0 bottom-0 bg-white/20'
+            style={{ height: `${hud.sprintReset * 100}%` }}
+          />
+          <span
+            aria-hidden
+            className='relative text-2xl leading-none'
+          >
+            💨
+          </span>
+          <span
+            aria-hidden
+            className='relative flex gap-0.5'
+          >
+            {Array.from({ length: SPRINT_MAX }, (_, i) => (
+              <span
+                key={i}
+                data-state={i < hud.sprints ? 'full' : 'empty'}
+                className={cn(
+                  'h-2 w-2.5 -skew-x-12 rounded-xs border border-[var(--game-ink)]',
+                  i < hud.sprints ? 'bg-[var(--game-tip)]' : 'bg-white/20',
+                )}
+              />
+            ))}
+          </span>
+          <kbd className='absolute top-1 hidden text-[0.55rem] leading-none font-black text-white/50 pointer-fine:block'>
+            SPACE
+          </kbd>
+        </button>
+      )}
 
       {/* dica do que fazer e bandeja, embaixo no centro */}
       <div className='mt-auto mb-[max(0.8rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-1.5'>

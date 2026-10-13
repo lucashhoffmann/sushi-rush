@@ -34,9 +34,10 @@ export const COLORS = {
     shade: 0x554466,
     sun: 0xffffff,
     shadow: 0x000000,
-    crate: 0xb07a3c,
     registerBody: 0x2b2b33,
     registerScreen: 0x7cf0a0,
+    // vento da corrida do player
+    wind: 0xd6f4ff,
   },
   // baloes e numeros que sobem (canvas)
   label: {
