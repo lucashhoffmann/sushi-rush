@@ -1,12 +1,9 @@
 import { COLORS } from '@/shared/colors';
 import * as THREE from 'three';
 
-import { loadCharacterView } from '@/app/engine/characters/character-model.loader';
+import { loadCharacterView } from 'three-hex-engine/three';
 import { SKIN_MODELS } from '@/app/engine/characters/character-models.config';
-import type {
-  CharacterPose,
-  CharacterView,
-} from '@/app/engine/characters/character-view.types';
+import type { CharacterPose, CharacterView } from 'three-hex-engine/three';
 import {
   clearFidget,
   EMOTE_SECONDS,
@@ -21,7 +18,7 @@ import {
   type Label,
   type LabelContent,
 } from '@/app/engine/renderers/label.renderer';
-import { loadModelKit, type ModelKit } from '@/app/engine/scenery/model-kit';
+import { loadModelKit, type ModelKit } from 'three-hex-engine/three';
 import {
   BITS,
   BITS_SCALE,
@@ -61,7 +58,7 @@ import type {
   World,
 } from '@/app/modules/world/types/world.types';
 import { getTexts } from '@/shared/i18n';
-import { angleDiff, distance } from '@/shared/utils/math.util';
+import { angleDiff, distance } from 'three-hex-engine/kit';
 
 // Desenha o `World`: cenario do kit, personagens, pratos e baloes. So le o
 // mundo; nada aqui muda a simulacao. Coordenadas: a simulacao e (x, y) com y

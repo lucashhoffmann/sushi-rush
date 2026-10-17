@@ -2,22 +2,25 @@
 
 Player, equipe e clientes sao o mesmo tipo de corpo: um modelo glTF com
 esqueleto e clipes, atras da interface `CharacterView`
-(`engine/characters/character-view.types.ts`). Quem desenha o mundo entrega a
+(`src/adapters/three/character-view.types.ts` do `three-hex-engine`, importada de
+`three-hex-engine/three`). Quem desenha o mundo entrega a
 pose do quadro e nao sabe o que ha por tras.
 
 ## Arquivos
 
 | Arquivo                      | O que e                                             | De quem |
 | ---------------------------- | --------------------------------------------------- | ------- |
-| `character-view.types.ts`    | `CharacterPose` e `CharacterView`                   | comum   |
-| `clip-driver.util.ts`        | pose -> que clipes tocam, com que peso (conta pura) | comum   |
-| `gltf-character.view.ts`     | a view: esqueleto, materiais, mixer                 | comum   |
-| `character-model.loader.ts`  | baixa e guarda os arquivos                          | comum   |
+| `character-view.types.ts`    | `CharacterPose` e `CharacterView`                   | engine  |
+| `clip-driver.util.ts`        | pose -> que clipes tocam, com que peso (conta pura) | engine  |
+| `gltf-character.view.ts`     | a view: esqueleto, materiais, mixer                 | engine  |
+| `character-model.loader.ts`  | baixa e guarda os arquivos                          | engine  |
 | `sushi.rig.ts`               | `RigSpec` do esqueleto do kit Sushi                 | jogo    |
 | `character-models.config.ts` | que arquivo cada skin usa                           | jogo    |
 
-"Comum" e copia identica dos outros jogos (`docs/engine-reuse.md`): nao
-editar aqui sem copiar para la.
+"Engine" mora em `src/adapters/three/` do repositorio `three-hex-engine` e sai
+de `three-hex-engine/three`;
+serve aos tres jogos. Correcao ali e feita no repositorio da engine, nao copiada
+(`docs/engine-reuse.md`). "Jogo" mora em `src/app/engine/characters/`.
 
 ## Como a pose vira animacao
 

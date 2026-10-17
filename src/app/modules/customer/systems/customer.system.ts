@@ -20,7 +20,7 @@ import type {
   Vec2,
   World,
 } from '@/app/modules/world/types/world.types';
-import { nextRandom } from '@/shared/utils/rng.util';
+import { nextRandom } from 'three-hex-engine/kit';
 
 // Clientes: chegam, esperam mesa, pedem, comem, pagam e vao embora. Quem os
 // faz avancar de "quer pedir" ate "pagou" e o atendimento (service.system).

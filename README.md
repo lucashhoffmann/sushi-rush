@@ -8,7 +8,7 @@ Jogo de restaurante com visão de cima, feito para navegador e celular. Você é
 
 ## Origem
 
-Terceiro jogo da mesma base (`workspace/games`): Shadow Contract, Blade & Bounty e este. A arquitetura é a mesma (um `World` de dados, sistemas em passo fixo, engine three.js que só desenha, UI React por cima) e os adaptadores de modelo (`src/app/engine/characters`, `src/app/engine/scenery/model-kit.ts`) são cópia dos outros dois. A simulação é nova. Ver `docs/engine-reuse.md`.
+Terceiro jogo da mesma base (`workspace/games`): Shadow Contract, Blade & Bounty e este. A arquitetura é a mesma (um `World` de dados, sistemas em passo fixo, engine three.js que só desenha, UI React por cima) e o que serve a qualquer jogo (loop, input, rng, grade, rede, view de personagem glTF, kit de cenário) vem da engine compartilhada, a biblioteca `three-hex-engine` (https://github.com/lucashhoffmann/three-hex-engine), não de cópia. A simulação é nova. Ver `docs/engine-reuse.md`.
 
 Modelos: kit "Sushi Restaurant" (personagens, cenário, comida, decoração), empacotado por `scripts/pack-sushi.mjs` em `public/models/sushi`; e KayKit Restaurant Bits (CC0), só de enfeite e detalhe (geladeiras, coifa, caixotes, potes, pratos, cardápios), empacotado por `scripts/pack-kaykit-restaurant.mjs` em `public/models/kaykit`.
 
@@ -36,6 +36,7 @@ Todo número acima mora em `src/app/modules/*/constants`.
 Zustand salva em `localStorage`, na chave `sushi-rush`: o restaurante (com selo contra edição manual, ver `src/app/store/game-store/save.ts`), a qualidade dos gráficos e se o "como jogar" já foi visto. O idioma fica em `sushi-rush-language`.
 
 ## Rodar
+
 
 ```bash
 pnpm install

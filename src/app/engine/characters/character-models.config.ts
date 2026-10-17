@@ -1,4 +1,4 @@
-import type { CharacterModel } from '@/app/engine/characters/character-model.loader';
+import type { CharacterModel } from 'three-hex-engine/three';
 import { SUSHI_RIG } from '@/app/engine/characters/sushi.rig';
 import { SKIN_IDS } from '@/app/modules/management/constants/management.constants';
 import type { SkinId } from '@/app/modules/world/types/world.types';

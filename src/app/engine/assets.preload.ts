@@ -1,6 +1,6 @@
-import { preloadCharacterModel } from '@/app/engine/characters/character-model.loader';
+import { preloadCharacterModel } from 'three-hex-engine/three';
 import { SKIN_MODELS } from '@/app/engine/characters/character-models.config';
-import { preloadModelKit } from '@/app/engine/scenery/model-kit';
+import { preloadModelKit } from 'three-hex-engine/three';
 import { BITS_URL, KIT_URL } from '@/app/engine/scenery/scenery.config';
 
 // espera maxima pela rede antes de deixar o dia comecar mesmo assim

@@ -26,7 +26,7 @@ import type {
   Vec2,
   World,
 } from '@/app/modules/world/types/world.types';
-import { clamp, distance } from '@/shared/utils/math.util';
+import { clamp, distance } from 'three-hex-engine/kit';
 
 // Os verbos do atendimento. Player e contratados chamam as mesmas funcoes:
 // quem faz muda so a velocidade.

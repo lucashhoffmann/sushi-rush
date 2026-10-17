@@ -1,16 +1,29 @@
 # Reuso em outros jogos
 
-O que deste projeto serve para o proximo jogo, o que e so do Sushi Rush,
-e como comecar um jogo novo a partir daqui. Regras de camada e nome continuam
-em `docs/pattern.md`.
+O que este projeto pega da engine compartilhada, o que e so do Sushi Rush, e
+onde vai codigo novo que serve a mais de um jogo. Regras de camada e nome
+continuam em `docs/pattern.md`.
 
-Estado atual, sem enfeite: **ainda nao existe uma engine separada**. Quase todo
-arquivo de `src/app` importa `modules/world` (o `World` deste jogo). O que
-existe e uma arquitetura que se repete bem e um punhado de pecas que ja sao
-neutras. Este documento marca a fronteira para ela nao piorar e da a ordem de
-extracao para quando houver um segundo jogo.
+Estado atual: **a engine existe** e e uma biblioteca separada,
+`three-hex-engine`, publicada no npm (`^0.1.1` em `dependencies`).
+Repositorio: https://github.com/lucashhoffmann/three-hex-engine
+(local em `../../three-hex-engine`). Arquitetura hexagonal (portas e
+adaptadores) com plugins: ver o
+[README](https://github.com/lucashhoffmann/three-hex-engine/blob/main/README.md) e
+[architecture.md](https://github.com/lucashhoffmann/three-hex-engine/blob/main/docs/architecture.md).
+Como cada jogo usa a engine e como comecar um jogo novo:
+[AGENTS.md](https://github.com/lucashhoffmann/three-hex-engine/blob/main/AGENTS.md).
+Os mesmos docs vem dentro do pacote: `node_modules/three-hex-engine/README.md`
+e `node_modules/three-hex-engine/docs/`.
 
-## Jogos que saem daqui
+Este projeto e independente: lockfile proprio, deploy proprio, `pnpm install`
+aqui dentro.
+
+Codigo comum nao e mais copiado entre jogos. Correcao em peca que ja esta na
+engine e feita no repositorio dela, sai numa versao nova e chega a cada jogo
+quando ele sobe a versao.
+
+## Jogos que usam a engine
 
 | Jogo            | Pasta                              | O que mudou                                                        |
 | --------------- | ---------------------------------- | ------------------------------------------------------------------ |
@@ -18,29 +31,37 @@ extracao para quando houver um segundo jogo.
 | Blade & Bounty  | `workspace/games/blade-and-bounty` | medieval: arco, besta, modelos e masmorra do KayKit, outras fontes |
 | Sushi Rush      | `workspace/games/sushi-rush`       | restaurante: simulacao nova, kit Sushi Restaurant, sem combate     |
 
-Blade & Bounty e Sushi Rush foram feitos pelo caminho de "Comecar um jogo
-novo hoje" (copia), nao por pacote. Por isso o codigo comum existe **tres
-vezes**.
+## O que este jogo pega da engine
 
-**Regra enquanto nao ha pacote:** correcao ou melhoria em codigo comum feita
-num jogo e copiada para os outros no mesmo dia. No Sushi Rush vale para:
+| Import                 | O que usa                                                                      | Onde no jogo                                          |
+| ---------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `three-hex-engine/core`   | `createEngine`: laco de passo fixo, teto de frame, frame snap                  | `app/engine/game-engine.ts`                           |
+| `three-hex-engine/clock`  | `rafClock`                                                                     | `game-engine.ts`                                      |
+| `three-hex-engine/input`  | `createKeyboardInput`, `createGamepadInput`, `combineInputs`, `MOVE`           | `game-engine.ts` (andar)                              |
+| `three-hex-engine/three`  | `createThreeRenderer`, view de personagem glTF, clipes, carregador, `ModelKit` | `game-engine.ts`, renderers, preload, `characters`    |
+| `three-hex-engine/kit`    | `nextRandom`, `clamp`, `distance`, `angleDiff`, `searchGrid`, `tileCenterOf`   | `app/modules` (TS puro)                               |
+| `three-hex-engine/net`    | conexao socket.io                                                              | `app/net/session.client.ts` (so le `VITE_SERVER_URL`) |
+| `three-hex-engine/server` | servidor de salas inteiro                                                      | `sushi-rush-server/src/main.ts`                       |
 
-- `src/app/engine/characters/`: `character-view.types.ts`,
-  `clip-driver.util.ts`, `gltf-character.view.ts`,
-  `character-model.loader.ts` e os testes deles
-- `src/app/engine/scenery/model-kit.ts` e o teste dele
+`three-hex-engine/kit` e TS puro: `app/modules` pode importar. `three` continua
+so em `src/app/engine` (a engine importa `three` nos adaptadores dela).
 
-O que este jogo **nao** tem dos outros: `kaykit.rig.ts` e
-`scripts/pack-kaykit*.mjs` (o esqueleto e o empacotador daqui sao
-`sushi.rig.ts` e `scripts/pack-sushi.mjs`; o segundo kit de cenario usa
-`scripts/pack-kaykit-restaurant.mjs`, copia do `pack-kaykit-dungeon.mjs` com
-outra lista), lobby e `session.store`. O
-joystick de toque e copia sem os botoes de salto, agachar e ataque.
+`pathfinding.util.ts` continua no jogo (`pathTo`, `pathBeside`): sabe da
+planta e passa a busca para `searchGrid`.
 
-`diff -r` entre as pastas dos jogos mostra o que divergiu.
+## O que fica no jogo
 
-Com tres jogos, o passo "Quando virar pacote" deixou de ser hipotetico: o
-primeiro candidato e exatamente essa lista.
+`modules/world/types` e `constants`, `customer`, `service`, `staff`,
+`player`, `management`, `menu`, `vault`, a planta em `layout.util.ts`,
+`world.renderer`, `label.renderer`, `character-preview.ts`,
+`assets.preload.ts`, `sushi.rig.ts`, `character-models.config.ts`,
+`scenery.config.ts`, HUD, gerencia, `save.ts`, `colors.ts`, `i18n.ts`, os
+atalhos de um toque (P, Esc, Enter, F/E, espaco, 1 a 4) e o `preventDefault`
+no `keydown` de `game-engine.ts`.
+
+O que este jogo **nao** tem dos outros: `kaykit.rig.ts`, lobby e
+`session.store`. O joystick de toque e so o disco, sem os botoes de salto,
+agachar e ataque.
 
 ## As tres camadas de reuso
 
@@ -54,49 +75,35 @@ jogo         World, sistemas, constantes, templates, renderers, HUD, textos
              so serve para o Sushi Rush
 ```
 
-A plataforma e onde o reuso rende mais (todo jogo precisa igual) e onde ainda
-nao ha codigo. O kit rende medio e esta hoje misturado com o jogo.
+O kit esta em boa parte na engine (laco, input, rng, grade, rede). A
+plataforma ainda nao tem codigo.
 
-## Mapa do que existe
+## Ainda no jogo, candidato a ir para a engine
 
-### Ja neutro: copia direto
+### Ja neutro
 
-Nao importa nada de `app/modules` nem de `app/store`.
+Nao importa nada de `app/modules` nem de `app/store`. Precisou num segundo
+jogo: mover para a engine, nao copiar.
 
 | Arquivo                                         | O que e                                                    |
 | ----------------------------------------------- | ---------------------------------------------------------- |
-| `shared/utils/rng.util.ts`                      | rng com seed, estado em `{ rngState }`                     |
-| `shared/utils/math.util.ts`                     | distancia, angulo, clamp                                   |
 | `shared/lib/utils.ts`                           | `cn` de classes                                            |
 | `shared/styles/classes.ts`                      | botao e placa de jogo                                      |
-| `app/net/protocol.ts`, `session.client.ts`      | contrato e conexao do servidor de salas                    |
 | `resources/components/base/virtual-joystick/*`  | joystick de toque (aqui, so o disco)                       |
 | `resources/components/ui/*`                     | botao e dialogo                                            |
 | `resources/pages/home/components/install-app/*` | convite de instalar o PWA                                  |
-| `app/engine/characters/*` (os quatro comuns)    | personagem de modelo glTF atras de `CharacterView`         |
-| `app/engine/scenery/model-kit.ts`               | kit de cenario: um GLB com varias pecas, pedidas pelo nome |
 | `app/engine/renderers/label.renderer.ts`        | balao de canvas na cena: texto, barra, numero que sobe     |
-| `app/modules/level/utils/pathfinding.util.ts`   | BFS em grade; so precisa de `isSolid`                      |
-
-O servidor de salas (`sushi-rush-server`) tambem e neutro.
+| `scripts/pack-kaykit-restaurant.mjs`            | copia do `pack-kaykit-dungeon.mjs` dos outros, outra lista |
 
 ### Neutro na ideia, preso no jogo: precisa separar
 
-| Peca                                   | Onde esta                         | O que prende                          | Como soltar                                |
-| -------------------------------------- | --------------------------------- | ------------------------------------- | ------------------------------------------ |
-| Laco de passo fixo, acumulador         | `app/engine/game-engine.ts`       | chama `useGameStore` e a camera daqui | receber `tick`, `getWorld` e `render`      |
-| Colisao de circulo e andar por caminho | `level/utils/layout.util.ts`      | mora junto da planta do restaurante   | `moveCircle` e `followPath` num arquivo so |
-| Save com selo                          | `store/game-store/save.ts`        | tipo `Restaurant`                     | generico em `TSave`                        |
-| Cofre de moeda permanente              | `vault/systems/vault.system.ts`   | `World`, `TIP_CAP`                    | receber a chave do dia e o teto            |
-| Idioma, `useTexts`                     | `shared/i18n.ts`                  | mecanismo divide o arquivo com textos | mecanismo num arquivo, textos em outro     |
-| Preview de personagem                  | `app/engine/character-preview.ts` | `SkinId`, emote `wave`                | receber o modelo e o emote                 |
-
-### So deste jogo: nao tentar reaproveitar
-
-`modules/world/types` e `constants`, `customer`, `service`, `staff`,
-`player`, `management`, `menu`, a planta em `layout.util.ts`,
-`world.renderer`, `sushi.rig.ts`, as configs de modelo, HUD, gerencia,
-`colors.ts`, os textos de `i18n.ts`.
+| Peca                                   | Onde esta                         | O que prende                          | Como soltar                                                |
+| -------------------------------------- | --------------------------------- | ------------------------------------- | ---------------------------------------------------------- |
+| Colisao de circulo e andar por caminho | `level/utils/layout.util.ts`      | mora junto da planta do restaurante   | `moveCircle` do kit com `isSolid`; `followPath` para o kit |
+| Save com selo                          | `store/game-store/save.ts`        | tipo `Restaurant`                     | generico em `TSave`                                        |
+| Cofre de moeda permanente              | `vault/systems/vault.system.ts`   | `World`, `TIP_CAP`                    | receber a chave do dia e o teto                            |
+| Idioma, `useTexts`                     | `shared/i18n.ts`                  | mecanismo divide o arquivo com textos | mecanismo num arquivo, textos em outro                     |
+| Preview de personagem                  | `app/engine/character-preview.ts` | `SkinId`, emote `wave`                | receber o modelo e o emote                                 |
 
 ## O formato que se repete
 
@@ -106,8 +113,8 @@ Todo jogo neste molde tem as mesmas sete decisoes. Mantenha-as e o kit encaixa.
    circular: serializa em JSON, o que da snapshot de rede e save de graca.
 2. **Sistemas sao funcoes** `fn(world, ...args, dt)` que mutam o `World`.
 3. **Passo fixo** (`FIXED_DT`). Nada de relogio dentro da simulacao.
-4. **Aleatorio so por `nextRandom(world)`.** Mesma seed, mesma partida: e o
-   que deixa testar chance com numero exato.
+4. **Aleatorio so por `nextRandom(world)`** (`three-hex-engine/kit`). Mesma seed,
+   mesma partida: e o que deixa testar chance com numero exato.
 5. **Numero de balanceamento em `*.constants.ts`**, com comentario dizendo o
    que ele faz no jogo. E onde se ajusta o jogo sem ler codigo.
 6. **Simulacao nao sabe de tela.** `modules` nao importa `three`, React nem
@@ -120,8 +127,18 @@ Mais os habitos que sustentam isso: teste ao lado em `tests/`, e
 
 ## Regra daqui para frente
 
-Para a fronteira nao piorar enquanto nao ha segundo jogo:
-
+- **Codigo que serve a qualquer jogo vai para o repositorio `three-hex-engine`**,
+  com teste, e e importado. Nao e copiado de um jogo para outro. O jogo recebe
+  subindo a versao (`pnpm up three-hex-engine`). Onde e como:
+  [AGENTS.md](https://github.com/lucashhoffmann/three-hex-engine/blob/main/AGENTS.md).
+- **Nunca editar `node_modules/three-hex-engine`.** Corrigir no repositorio,
+  publicar versao nova, subir a versao no jogo.
+- **Engine e jogo juntos:** na engine `pnpm build --watch` (tsup); no jogo
+  `pnpm link ../../three-hex-engine`. Antes de commitar o jogo,
+  `pnpm unlink three-hex-engine && pnpm install`, para `package.json` e o
+  lockfile voltarem a versao do npm. Link commitado quebra o deploy.
+- **Mudou a engine:** `pnpm test` no `three-hex-engine` e `pnpm test` em cada
+  jogo com a versao nova.
 - **Codigo de plataforma nasce em `src/platform/`** e nao importa `app/modules`,
   `app/store` nem `app/engine`. Conta, pagamento, posse de item, analytics e
   anuncio entram ai. Fala com o jogo por funcoes e eventos de nome generico
@@ -136,41 +153,9 @@ Para a fronteira nao piorar enquanto nao ha segundo jogo:
 O teste da fronteira e mecanico: um arquivo e reusavel se a lista de imports
 dele nao tem `@/app/modules`, `@/app/store` nem `@/app/engine`.
 
-## Comecar um jogo novo hoje
+## Comecar um jogo novo
 
-Enquanto nao houver pacote, o caminho e copiar. E barato e nao acopla os jogos.
-
-1. Copie o repositorio inteiro e o `sushi-rush-server`.
-2. Mantenha: `shared/utils`, `shared/lib`, `app/net`, `resources/components`,
-   a configuracao (vite, tsconfig, eslint, vitest, tailwind, PWA), os `docs/`.
-3. Apague o conteudo de `app/modules/*`, os renderers, as paginas de jogo e
-   os textos de `i18n.ts`. Guarde `game-engine.ts`, `layout.util.ts`,
-   `pathfinding.util.ts`, `save.ts` e `label.renderer.ts` como ponto
-   de partida: sao as pecas da segunda tabela.
-4. Escreva o `World` novo em `world.types.ts` seguindo o formato acima.
-5. Escreva `stepWorld`, depois o renderer, depois o HUD. Nessa ordem: o jogo
-   roda em teste antes de ter tela.
-6. Ao adaptar cada peca guardada no passo 3, solte a dependencia do jeito que
-   a tabela diz. E nessa hora que ela vira kit de verdade.
-
-## Quando virar pacote
-
-So com o segundo jogo andando. Antes disso nao da para saber qual e a
-interface certa, e pacote com um unico consumidor so adiciona etapa de build.
-
-Ordem, do que rende mais para o que rende menos:
-
-1. **Plataforma** (`src/platform` vira pacote): conta, pagamento, analytics.
-   Todo jogo usa igual, e e o que tem dinheiro e dado de usuario: corrigir num
-   lugar so importa.
-2. **Rede** (`app/net` + servidor + snapshot generico): ja esta quase solta.
-3. **Kit de simulacao**: rng, math, grade, caminho, laco de passo fixo.
-4. **Componentes de toque e UI**: joystick, vinheta, instalar, compartilhar.
-
-Forma: monorepo pnpm (`packages/platform`, `packages/net`, `packages/kit`,
-`games/blade-and-bounty`, `games/<novo>`). O projeto ja usa pnpm; workspace nao
-pede ferramenta nova. Publicar em registro so se os jogos forem para
-repositorios separados.
-
-Nao entra em pacote: renderers, modelos, sistemas de combate e inimigo. Cada
-jogo tem os seus, e forcar um formato comum ai custa mais do que copiar.
+Seguir o [AGENTS.md](https://github.com/lucashhoffmann/three-hex-engine/blob/main/AGENTS.md) da engine: comeca
+pelo `examples/coin-rush` (jogo minimo com teste), escreve o `World`, os
+sistemas e o renderer nessa ordem. O que serve a qualquer jogo ja vem da
+engine.

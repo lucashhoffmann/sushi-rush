@@ -1,5 +1,5 @@
-import type { CharacterView } from '@/app/engine/characters/character-view.types';
-import type { RigSpec } from '@/app/engine/characters/gltf-character.view';
+import type { CharacterView } from 'three-hex-engine/three';
+import type { RigSpec } from 'three-hex-engine/three';
 
 // Esqueleto dos personagens do kit "Sushi Restaurant" (panda e coelhos).
 // Todos tem os mesmos ossos; os clipes do panda vem no arquivo dele e os dos

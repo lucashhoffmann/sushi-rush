@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 import { SKIN_MODELS } from '@/app/engine/characters/character-models.config';
-import { clipNames } from '@/app/engine/characters/clip-driver.util';
+import { clipNames } from 'three-hex-engine/three';
 import {
   KNIFE_NODE,
   PAN_NODE,

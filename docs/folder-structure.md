@@ -3,6 +3,11 @@
 Estrutura alvo do `sushi-rush`. Regras de nome e dependencia estao em
 `docs/pattern.md`.
 
+Pecas que servem a qualquer jogo (loop, input, rng, grade, rede, view de
+personagem glTF, kit de cenario) nao moram aqui: vem da biblioteca
+`three-hex-engine` (dependencia npm, ver
+https://github.com/lucashhoffmann/three-hex-engine).
+
 ## `src`
 
 ```text
@@ -13,15 +18,10 @@ src
 │   │   ├── character-preview.ts         preview 3D da loja de skins
 │   │   ├── assets.preload.ts
 │   │   ├── characters                   personagens de modelo (docs/characters.md)
-│   │   │   ├── character-view.types.ts
-│   │   │   ├── clip-driver.util.ts
-│   │   │   ├── gltf-character.view.ts
-│   │   │   ├── character-model.loader.ts
 │   │   │   ├── sushi.rig.ts
 │   │   │   ├── character-models.config.ts
 │   │   │   └── tests
 │   │   ├── scenery                      cenario de modelo (docs/scenery.md)
-│   │   │   ├── model-kit.ts
 │   │   │   ├── scenery.config.ts
 │   │   │   └── tests
 │   │   ├── renderers
@@ -30,6 +30,7 @@ src
 │   │   └── tests                        arquivos publicados x configuracao
 │   ├── modules
 │   ├── net                              servidor de salas (ainda sem uso)
+│   │   └── session.client.ts            le VITE_SERVER_URL; o resto e three-hex-engine/net
 │   └── store
 │       └── game-store
 │           ├── game.store.ts            telas, HUD, acoes
@@ -52,8 +53,7 @@ src
 │   ├── colors.ts
 │   ├── i18n.ts
 │   ├── lib
-│   ├── styles
-│   └── utils
+│   └── styles
 └── test
     ├── setup.ts
     └── world.fixture.ts
@@ -71,7 +71,7 @@ src/app/modules
 │   └── tests
 ├── level
 │   ├── utils/layout.util.ts             planta, colisao, andar por caminho
-│   ├── utils/pathfinding.util.ts        pathTo, pathBeside
+│   ├── utils/pathfinding.util.ts        pathTo, pathBeside (BFS em three-hex-engine/kit)
 │   └── tests
 ├── menu
 │   └── constants/menu.constants.ts      os pratos
@@ -105,5 +105,5 @@ src/app/modules
 | novo visual 3D                   | `app/engine/renderers`                          |
 | novo campo visivel no HUD        | `Hud` em `app/store/game-store/game.store.ts`   |
 | nova tela ou painel              | `resources/pages/<feature>`                     |
-| helper matematico neutro         | `shared/utils`                                  |
+| helper que serve a qualquer jogo | repositorio `three-hex-engine`                 |
 | mundo de teste                   | `src/test/world.fixture.ts`                     |

@@ -20,12 +20,10 @@ pnpm typecheck     # inclui os arquivos de teste (tsconfig.spec.json)
 | `resources`   | joystick, instalar app | Testing Library                                   |
 | `app/engine`  | render three.js        | cena three sem WebGL (jsdom); visual no navegador |
 
-Personagem de modelo (`app/engine/characters`): `clip-driver` e conta pura;
-a view e testada com um modelo e clipes montados no proprio teste, sem
-carregar arquivo.
-
-Cenario de modelo (`app/engine/scenery`): `model-kit.test.ts` monta a cena
-do kit no proprio teste.
+Personagem e cenario de modelo: os testes de `clip-driver`, da view e do
+kit de cenario estao na engine (`three-hex-engine`, `src/adapters/three/tests`), junto do
+codigo (`pnpm test` no `three-hex-engine`). Mudou a engine: rodar os testes
+dela e o `pnpm test` deste jogo com a versao nova.
 
 `app/engine/tests/sushi.assets.test.ts` le os GLB de `public/models/sushi` e
 confere pecas, ossos e clipes contra `scenery.config.ts`, `sushi.rig.ts` e

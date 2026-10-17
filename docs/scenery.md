@@ -1,9 +1,11 @@
 # Cenario
 
 Tudo que nao e personagem vem de um arquivo so, `public/models/sushi/kit.glb`:
-cada peca e um no `piece_<nome>`. `engine/scenery/model-kit.ts` (comum aos
-tres jogos) entrega copias pelo nome; `engine/scenery/scenery.config.ts`
-(deste jogo) diz que peca faz cada coisa.
+cada peca e um no `piece_<nome>`. `loadModelKit` (`three-hex-engine/three`,
+codigo em `src/adapters/three/model-kit.ts` do `three-hex-engine`, comum aos
+tres jogos)
+entrega copias pelo nome; `src/app/engine/scenery/scenery.config.ts` (deste
+jogo) diz que peca faz cada coisa.
 
 ## Escala
 

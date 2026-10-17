@@ -1,15 +1,10 @@
+import { searchGrid, tileCenterOf } from 'three-hex-engine/kit';
+
 import { isSolid } from '@/app/modules/level/utils/layout.util';
 import type { Layout, Vec2 } from '@/app/modules/world/types/world.types';
 
-const DIRS = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
-
-// BFS em 4 direcoes: no grid de custo uniforme ja devolve o caminho mais
-// curto, e sem diagonal nao corta quina de mesa.
+// Caminho em 4 direcoes pela grade (BFS do kit da engine): mais curto, e sem
+// diagonal nao corta quina de mesa.
 // Devolve os centros dos tiles depois do inicial, terminando no primeiro tile
 // que `isGoal` aceita. Vazio quando ja esta nele; null quando nao ha caminho.
 function search(
@@ -17,30 +12,8 @@ function search(
   from: Vec2,
   isGoal: (tx: number, ty: number) => boolean,
 ): Vec2[] | null {
-  const queue: [number, number][] = [[Math.floor(from.x), Math.floor(from.y)]];
-  const parents = [-1];
-  const seen = new Set([queue[0][1] * layout.w + queue[0][0]]);
-
-  for (let i = 0; i < queue.length; i++) {
-    const [x, y] = queue[i];
-    if (isGoal(x, y)) {
-      const path: Vec2[] = [];
-      for (let n = i; n > 0; n = parents[n]) {
-        path.unshift({ x: queue[n][0] + 0.5, y: queue[n][1] + 0.5 });
-      }
-      return path;
-    }
-    for (const [dx, dy] of DIRS) {
-      const nx = x + dx;
-      const ny = y + dy;
-      const key = ny * layout.w + nx;
-      if (seen.has(key) || isSolid(layout, nx, ny)) continue;
-      seen.add(key);
-      parents.push(i);
-      queue.push([nx, ny]);
-    }
-  }
-  return null;
+  const tiles = searchGrid(from, isGoal, (x, y) => isSolid(layout, x, y));
+  return tiles?.map(tileCenterOf) ?? null;
 }
 
 // caminho ate o tile de `to`

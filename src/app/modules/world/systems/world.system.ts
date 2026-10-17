@@ -43,7 +43,7 @@ import type {
   Restaurant,
   World,
 } from '@/app/modules/world/types/world.types';
-import { nextRandom } from '@/shared/utils/rng.util';
+import { nextRandom } from 'three-hex-engine/kit';
 
 // Contrato em docs/contracts.md (secao Simulacao).
 

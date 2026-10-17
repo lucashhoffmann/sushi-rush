@@ -46,7 +46,7 @@ import type {
   StaffRole,
   StationKind,
 } from '@/app/modules/world/types/world.types';
-import { clamp } from '@/shared/utils/math.util';
+import { clamp } from 'three-hex-engine/kit';
 
 // A gerencia: tudo que se compra entre um dia e outro. Funcoes puras sobre o
 // `Restaurant`; quem guarda e sela o resultado e o save (store/game-store).
